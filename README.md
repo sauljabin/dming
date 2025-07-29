@@ -1,18 +1,14 @@
-# dnd-scripts
+# DMing
 
-D&D python scripts collection.
+WORK IN PROGRESS
+
+This is a set of terminal tools for RPG games like D&D.
 
 Install:
 
 ```shell
 poetry update
 poetry install
-```
-
-Run script:
-
-```shell
-poetry run python <script>
 ```
 
 https://en.wiktionary.org/wiki/DMing
