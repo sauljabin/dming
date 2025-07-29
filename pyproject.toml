@@ -1,16 +1,33 @@
 [project]
-name = "dnd-scripts"
+name = "dming"
 version = "0.1.0"
-description = "D&D python scripts collection."
+description = "DMing terminal commands collection."
 authors = [
     {name = "Saúl Piña",email = "sauljabin@gmail.com"}
 ]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Environment :: Console",
+    "Operating System :: MacOS",
+    "Operating System :: Unix",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.13,<3.14"
 dependencies = [
+    "click (>=8.2.1,<9.0.0)"
 ]
 
+[tool.ruff]
+line-length = 88
+indent-width = 4
+
+[project.scripts]
+roll = "dming.roll:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
