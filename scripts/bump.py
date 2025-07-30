@@ -22,7 +22,6 @@ def main(rule: str) -> None:
     """
     bump_version(rule)
     new_app_version = get_app_version()
-    changelog_release(new_app_version)
 
     console = Console()
     confirmation = console.input(
@@ -35,19 +34,6 @@ def main(rule: str) -> None:
         exit(1)
 
     confirm_changes(new_app_version)
-
-
-def changelog_release(version: str) -> None:
-    init_commands = {
-        f"upgrading changelog to a [purple bold]{version}[/] version": (
-            f"poetry run changeloggh release {version}"
-        ),
-    }
-    revert_commands = {
-        "deleting changes": "git checkout .",
-    }
-    command_processor = CommandProcessor(init_commands, revert_commands)
-    command_processor.run()
 
 
 def bump_version(rule: str) -> None:
