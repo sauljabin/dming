@@ -27,7 +27,7 @@ line-length = 88
 indent-width = 4
 
 [project.scripts]
-roll = "dming.roll:main"
+roll = "dming.cli:_roll"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
