@@ -1,6 +1,6 @@
 [project]
 name = "dming"
-version = "0.1.0"
+version = "0.0.0"
 description = "DMing is a CLI (command-line interface) collection useful when running a TTRPG (tabletop role-playing games)."
 authors = [
     {name = "Saúl Piña",email = "sauljabin@gmail.com"}
@@ -10,9 +10,6 @@ classifiers = [
     "Environment :: Console",
     "Operating System :: MacOS",
     "Operating System :: Unix",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
 license = {text = "MIT"}
