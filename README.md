@@ -25,12 +25,16 @@ Examples:
 * `roll 1d100`: roll a d100 die
 * `roll 2d20kh1`: roll with advantage
 * `roll 2d20kl1`: roll with disadvantage
+* `roll 2d20dl1`: roll with advantage
+* `roll 2d20dh1`: roll with disadvantage
 * `roll 1d20+4`: roll a d20 die with a +4 modifier
 * `roll 1d20-4`: roll a d20 die with a -4 modifier
 
 > [!NOTE]
 > `kh`: keep highest \
-> `kl`: keep lowest
+> `kl`: keep lowest \
+> `dh`: drop highest \
+> `dl`: drop lowest
 
 ### Using the Library
 
@@ -40,7 +44,7 @@ Examples:
 ```python
 from dming.dice import roll
 
-expression, result = roll("1d20+2")
+operation, result = roll("1d20+2")
 ```
 
 ## Alternatives

@@ -174,3 +174,107 @@ class TestKeepLowestRoll(unittest.TestCase):
 
         result = roll("2d20kl1+1d20+3")
         self.assertEqual(("9+15+3", 27), result)
+
+
+class TestDropHighestRoll(unittest.TestCase):
+    @patch("dming.dice.random")
+    def test_2d20dh_roll(self, mock_random):
+        generated_dice = [20, 10]
+        expected_value = 10
+        mock_random.randint.side_effect = generated_dice
+
+        result = roll("2d20dh")
+        self.assertEqual((f"{expected_value}", expected_value), result)
+
+    @patch("dming.dice.random")
+    def test_2d20dh_plus2_roll(self, mock_random):
+        generated_dice = [20, 10]
+        mock_random.randint.side_effect = generated_dice
+
+        result = roll("2d20dh+2")
+        self.assertEqual(("10+2", 12), result)
+
+    @patch("dming.dice.random")
+    def test_2d20dh1_roll(self, mock_random):
+        generated_dice = [19, 9]
+        expected_value = 9
+        mock_random.randint.side_effect = generated_dice
+
+        result = roll("2d20dh1")
+        self.assertEqual((f"{expected_value}", expected_value), result)
+
+    @patch("dming.dice.random")
+    def test_2d20dh1_plus3_roll(self, mock_random):
+        generated_dice = [19, 9]
+        mock_random.randint.side_effect = generated_dice
+
+        result = roll("2d20dh1+3")
+        self.assertEqual(("9+3", 12), result)
+
+    @patch("dming.dice.random")
+    def test_2d20dh1_minus3_roll(self, mock_random):
+        generated_dice = [19, 9]
+        mock_random.randint.side_effect = generated_dice
+
+        result = roll("2d20dh1-3")
+        self.assertEqual(("9-3", 6), result)
+
+    @patch("dming.dice.random")
+    def test_2d20dh1_plus1d20_plus3_roll(self, mock_random):
+        generated_dice = [19, 9, 15, 16]
+        mock_random.randint.side_effect = generated_dice
+
+        result = roll("2d20dh1+1d20+3")
+        self.assertEqual(("9+15+3", 27), result)
+
+
+class TestDropLowestRoll(unittest.TestCase):
+    @patch("dming.dice.random")
+    def test_2d20dl_roll(self, mock_random):
+        generated_dice = [20, 10]
+        expected_value = 20
+        mock_random.randint.side_effect = generated_dice
+
+        result = roll("2d20dl")
+        self.assertEqual((f"{expected_value}", expected_value), result)
+
+    @patch("dming.dice.random")
+    def test_2d20dl_plus2_roll(self, mock_random):
+        generated_dice = [20, 10]
+        mock_random.randint.side_effect = generated_dice
+
+        result = roll("2d20dl+2")
+        self.assertEqual(("20+2", 22), result)
+
+    @patch("dming.dice.random")
+    def test_2d20dl1_roll(self, mock_random):
+        generated_dice = [19, 9]
+        expected_value = 19
+        mock_random.randint.side_effect = generated_dice
+
+        result = roll("2d20dl1")
+        self.assertEqual((f"{expected_value}", expected_value), result)
+
+    @patch("dming.dice.random")
+    def test_2d20dl1_plus3_roll(self, mock_random):
+        generated_dice = [19, 9]
+        mock_random.randint.side_effect = generated_dice
+
+        result = roll("2d20dl1+3")
+        self.assertEqual(("19+3", 22), result)
+
+    @patch("dming.dice.random")
+    def test_2d20dl1_minus3_roll(self, mock_random):
+        generated_dice = [19, 9]
+        mock_random.randint.side_effect = generated_dice
+
+        result = roll("2d20dl1-3")
+        self.assertEqual(("19-3", 16), result)
+
+    @patch("dming.dice.random")
+    def test_2d20dl1_plus1d20_plus3_roll(self, mock_random):
+        generated_dice = [19, 9, 15, 16]
+        mock_random.randint.side_effect = generated_dice
+
+        result = roll("2d20dl1+1d20+3")
+        self.assertEqual(("19+15+3", 37), result)
