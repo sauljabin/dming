@@ -1,7 +1,7 @@
 [project]
 name = "dming"
 version = "0.1.0"
-description = "DMing terminal commands collection."
+description = "DMing is a CLI (command-line interface) collection useful when running a TTRPG (tabletop role-playing games)."
 authors = [
     {name = "Saúl Piña",email = "sauljabin@gmail.com"}
 ]
@@ -19,7 +19,8 @@ license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
-    "click (>=8.2.1,<9.0.0)"
+    "click (>=8.2.1,<9.0.0)",
+    "rich (>=14.1.0,<15.0.0)"
 ]
 
 [tool.ruff]

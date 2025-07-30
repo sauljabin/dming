@@ -2,6 +2,8 @@ import click
 
 from dming.dice import roll
 
+from rich.console import Console
+
 
 @click.command()
 @click.argument("dice")
@@ -21,7 +23,11 @@ def _roll(dice: str, verbose: bool) -> None:
     """
     try:
         expression, result = roll(dice)
-        print(f"{expression + '=' if verbose else ''}{result}")
+        if verbose:
+            console = Console()
+            console.print(f"{expression}={result}")
+        else:
+            print(f"{result}")
     except Exception as e:
         print(f"Invalid expression: {e}")
         exit(-1)
