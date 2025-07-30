@@ -1,6 +1,6 @@
 # DMing
 
-DMing is a CLI (command-line interface) collection useful when running a TTRPG (tabletop role-playing games).
+DMing is a CLI (command-line interface) collection useful when running a TTRPG (tabletop role-playing game).
 
 > *[DMing](https://en.wiktionary.org/wiki/DMing)([Dungeon Mastering](https://en.wiktionary.org/wiki/Dungeon_Mastering#English)): Performing as a dungeon master, or running a tabletop role-playing game, especially Dungeons & Dragons.*
 
