@@ -55,12 +55,27 @@ operation, result = roll("1d20+2")
 
 Installing poetry:
 
-```sh
+```shell
 pipx install poetry
 ```
 
 Installing development dependencies:
 
-```sh
+```shell
 poetry install
+```
+
+Run:
+
+```shell
+poetry run roll <dice>
+```
+
+## Release a new version
+
+> Check https://python-poetry.org/docs/cli/#version
+
+```shell
+poetry run python -m scripts.bump --help
+poetry run python -m scripts.bump <major|minor|patch>
 ```
