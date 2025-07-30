@@ -18,16 +18,16 @@ def dl(n: int, dice: list[int]) -> list[int]:
     return sorted(dice)[n:]
 
 
-REDUCERS = {"kh": kh, "kl": kl, "dh": dh, "dl": dl}
+FILTERS = {"kh": kh, "kl": kl, "dh": dh, "dl": dl}
 
 
 def roll(dice: str) -> tuple[str, int]:
     def replacer(expression: re.Match[str]):
-        total, die, reducer, total_keep = expression.groups()
+        total, die, filter, total_keep = expression.groups()
         dice = [random.randint(1, int(die)) for _ in range(int(total) if total else 1)]
         filtered_dice = (
-            REDUCERS[reducer](int(total_keep) if total_keep else 1, dice)
-            if reducer
+            FILTERS[filter](int(total_keep) if total_keep else 1, dice)
+            if filter
             else dice
         )
         return str(sum(filtered_dice))
