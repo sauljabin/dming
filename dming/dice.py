@@ -3,14 +3,6 @@ import re
 import random
 
 
-# TODO:
-# 1. ADD RICH
-# 3. PRINT A BETTER EXPRESSION
-# 4. RELEASE
-# 5. DOCUMENTATION
-# 6. ADD TESTS
-
-
 def roll(dice: str) -> tuple[str, int]:
     def replacer(expression: re.Match[str]):
         total, die, keep, total_keep = expression.groups()
