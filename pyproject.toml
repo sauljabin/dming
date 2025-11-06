@@ -11,13 +11,14 @@ classifiers = [
     "Operating System :: MacOS",
     "Operating System :: Unix",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.13,<3.15"
 dependencies = [
-    "click (>=8.2.1,<9.0.0)",
-    "rich (>=14.1.0,<15.0.0)"
+    "click>=8",
+    "rich>=14"
 ]
 
 [tool.ruff]
