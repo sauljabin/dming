@@ -1,6 +1,6 @@
 [project]
 name = "dming"
-version = "0.1.0"
+version = "0.1.1"
 description = "DMing is a CLI (command-line interface) collection useful when running a TTRPG (tabletop role-playing games)."
 authors = [
     {name = "Saúl Piña",email = "sauljabin@gmail.com"}
