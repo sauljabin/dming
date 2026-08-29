@@ -53,29 +53,8 @@ operation, result = roll("1d20+2")
 
 ## Development
 
-Installing poetry:
+For development instructions, see the [DMing development guide](DEVELOPMENT.md).
 
-```shell
-pipx install poetry
-```
+## Releases
 
-Installing development dependencies:
-
-```shell
-poetry install
-```
-
-Run:
-
-```shell
-poetry run roll <dice>
-```
-
-## Release a new version
-
-> Check https://python-poetry.org/docs/cli/#version
-
-```shell
-poetry run python -m scripts.bump --help
-poetry run python -m scripts.bump <major|minor|patch>
-```
+GitHub Releases are the canonical release history. See [DMing releases](https://github.com/sauljabin/dming/releases) for release notes and downloadable artifacts.

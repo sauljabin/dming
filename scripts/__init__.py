@@ -6,9 +6,7 @@ from rich.console import Console
 
 
 class CommandProcessor:
-    def __init__(
-        self, commands: dict[str, str], rollback: dict[str, str] | None = None
-    ) -> None:
+    def __init__(self, commands: dict[str, str], rollback: dict[str, str] | None = None) -> None:
         if rollback is None:
             rollback = {}
         self.commands = commands
@@ -41,7 +39,7 @@ class CommandProcessor:
         self.console.print()
         self.console.print(f"[bold blue]{name.lower()}:")
         self.console.print(f"[bold yellow]{command}[/]")
-        return subprocess.run(shlex.split(command), capture_output=True, text=True)
+        return subprocess.run(shlex.split(command), capture_output=True, text=True, check=False)
 
 
 if __name__ == "__main__":

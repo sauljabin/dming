@@ -1,9 +1,9 @@
 [project]
 name = "dming"
-version = "0.1.1"
+dynamic = ["version"]
 description = "DMing is a CLI (command-line interface) collection useful when running a TTRPG (tabletop role-playing games)."
 authors = [
-    {name = "Saúl Piña",email = "sauljabin@gmail.com"}
+    { name = "Saúl Piña", email = "sauljabin@gmail.com" }
 ]
 classifiers = [
     "License :: OSI Approved :: MIT License",
@@ -13,7 +13,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
 ]
-license = {text = "MIT"}
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.13,<3.15"
 dependencies = [
@@ -21,16 +21,54 @@ dependencies = [
     "rich>=14"
 ]
 
-[tool.ruff]
-line-length = 88
-indent-width = 4
-
 [project.scripts]
 roll = "dming.cli:_roll"
 
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+[project.urls]
+homepage = "https://github.com/sauljabin/dming"
+repository = "https://github.com/sauljabin/dming"
+changelog = "https://github.com/sauljabin/dming/releases"
+issues = "https://github.com/sauljabin/dming/issues"
+funding = "https://github.com/sponsors/sauljabin"
 
-[tool.poetry.group.dev.dependencies]
-faker = "*"
+[dependency-groups]
+dev = [
+    "actionlint-py",
+    "black",
+    "faker",
+    "mypy",
+    "pre-commit",
+    "ruff",
+    "typos",
+]
+
+[build-system]
+requires = ["hatchling>=1.27,<2", "hatch-vcs>=0.5,<1"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+tag-pattern = "^v(?P<version>[0-9]+\\.[0-9]+\\.[0-9]+)$"
+
+[tool.hatch.version.raw-options]
+local_scheme = "no-local-version"
+
+[tool.hatch.build.targets.wheel]
+packages = ["dming"]
+
+[tool.black]
+line-length = 100
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+extend-select = ["C901"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.typos]
+type.lock.extend-glob = ["*.lock"]
+type.lock.check-file = true
+files.extend-exclude = ["uv.lock"]

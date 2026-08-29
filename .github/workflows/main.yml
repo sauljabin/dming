@@ -2,32 +2,101 @@ name: CI
 
 on:
   push:
-    branches:
-      - 'main'
+    branches: [main]
   pull_request:
-    branches:
-      - '**'
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_VERSION: "0.12.7"
 
 jobs:
-  build:
-    runs-on: ${{ matrix.platform }}
-    strategy:
-      matrix:
-        platform: [ ubuntu-latest, macos-latest ]
-        python-version: [ '3.13', '3.14' ]
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/checkout@v7.0.1
         with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v10.0.1
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.14"
+          enable-cache: true
+      - name: Sync dependencies
+        run: uv sync --locked
+      - name: Analyze
+        run: uv run --locked python -m scripts.analyze
+
+  unit-tests:
+    name: Unit / ${{ matrix.os }} / Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.13", "3.14"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v10.0.1
+        with:
+          version: ${{ env.UV_VERSION }}
           python-version: ${{ matrix.python-version }}
-      - name: Install Dependencies
+          enable-cache: true
+      - name: Sync dependencies
+        run: uv sync --locked
+      - name: Run unit tests
+        run: uv run --locked python -m scripts.tests
+
+  build:
+    name: Package
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v10.0.1
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.13"
+          enable-cache: true
+      - name: Verify lockfile
+        run: uv lock --check
+      - name: Build distributions
+        run: uv build --clear
+
+  result:
+    name: CI result
+    if: always()
+    needs: [quality, unit-tests, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require successful jobs
+        env:
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          UNIT_RESULT: ${{ needs.unit-tests.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
         run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install poetry
-          poetry install
-      - name: Run Tests
-        run: poetry run python -m unittest discover -v
-      - name: Run Build
-        run: poetry build
+          test "$QUALITY_RESULT" = success
+          test "$UNIT_RESULT" = success
+          test "$BUILD_RESULT" = success
