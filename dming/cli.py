@@ -1,16 +1,15 @@
+import sys
+
 import click
-
-from dming.dice import roll
-from dming import __version__
-
 from rich.console import Console
+
+from dming import __version__
+from dming.dice import InvalidDiceError, roll
 
 
 @click.command()
 @click.argument("dice")
-@click.option(
-    "-v", "verbose", help="Verbose output. Show the arithmetic operation.", is_flag=True
-)
+@click.option("-v", "verbose", help="Verbose output. Show the arithmetic operation.", is_flag=True)
 @click.version_option(__version__)
 def _roll(dice: str, verbose: bool) -> None:
     """
@@ -34,6 +33,6 @@ def _roll(dice: str, verbose: bool) -> None:
             console.print(f"{operation}={result}")
         else:
             print(f"{result}")
-    except Exception as e:
+    except InvalidDiceError as e:
         print(f"Invalid operation: {e}")
-        exit(-1)
+        sys.exit(-1)
