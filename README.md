@@ -30,6 +30,30 @@ Examples:
 * `roll 1d20+4`: roll a d20 die with a +4 modifier
 * `roll 1d20-4`: roll a d20 die with a -4 modifier
 
+Add `-d` or `--details` to show every die, which dice were selected by a keep or
+drop filter, and the complete arithmetic formula. Use `--plain` for output
+without styling or emojis.
+
+```console
+$ roll --details 2d20kh1
+🎲 2d20kh1
+├─ 2d20kh1: 19, 9 → 19 (keep highest 1)
+├─ Math: 19
+└─ Result: 19
+
+$ roll --details 2d20
+🎲 2d20
+├─ 2d20: 4, 4
+├─ Math: 4 + 4
+└─ Result: 8
+
+$ roll --details --plain 2d20
+Roll:   2d20
+2d20:   4, 4
+Math:   4 + 4
+Result: 8
+```
+
 > [!NOTE]
 > `kh`: keep highest \
 > `kl`: keep lowest \

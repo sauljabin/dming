@@ -1,17 +1,84 @@
-import sys
-
 import click
 from rich.console import Console
+from rich.text import Text
 
 from dming import __version__
-from dming.dice import InvalidDiceError, roll
+from dming.dice import DiceGroup, InvalidDiceError, RollDetails, roll_details
+
+FILTER_LABELS = {
+    "kh": "keep highest",
+    "kl": "keep lowest",
+    "dh": "drop highest",
+    "dl": "drop lowest",
+}
+
+
+def _plain_line(label: str, value: str | int, width: int) -> str:
+    return f"{label + ':':<{width}} {value}"
+
+
+def _plain_group(group: DiceGroup) -> str:
+    rolls = ", ".join(map(str, group.rolls))
+    if not group.filter_name:
+        return rolls
+
+    selected = ", ".join(map(str, group.selected)) or "none"
+    rule = FILTER_LABELS[group.filter_name]
+    return f"{rolls} -> {selected} ({rule} {group.filter_count})"
+
+
+def _rich_group(group: DiceGroup) -> Text:
+    line = Text(f"├─ {group.expression}: ", style="dim")
+    for index, value in enumerate(group.rolls):
+        if index:
+            line.append(", ", style="dim")
+        if index in group.selected_indices:
+            line.append(str(value), style="bold green")
+        else:
+            line.append(str(value), style="strike dim red")
+
+    if not group.filter_name:
+        return line
+
+    selected = ", ".join(map(str, group.selected)) or "none"
+    rule = FILTER_LABELS[group.filter_name]
+    line.append(" → ", style="bold yellow")
+    line.append(selected, style="bold green")
+    line.append(f" ({rule} {group.filter_count})", style="cyan")
+    return line
+
+
+def _show_details(details: RollDetails, plain: bool) -> None:
+    formula = details.formula.replace("+", " + ").replace("-", " - ")
+    if plain:
+        rows: list[tuple[str, str | int]] = [("Roll", details.expression)]
+        rows.extend((group.expression, _plain_group(group)) for group in details.groups)
+        rows.extend((("Math", formula), ("Result", details.result)))
+        width = max(len(label) + 1 for label, _ in rows)
+        for label, value in rows:
+            click.echo(_plain_line(label, value, width))
+        return
+    console = Console()
+    console.print("🎲", f"[bold magenta]{details.expression}[/]")
+    for group in details.groups:
+        console.print(_rich_group(group))
+    console.print(f"├─ [dim]Math:[/] [cyan]{formula}[/]")
+    console.print(f"└─ [dim]Result:[/] [bold yellow]{details.result}[/]")
+
+
+def _show_result(result: int, plain: bool) -> None:
+    if plain:
+        click.echo(result)
+        return
+    Console().print(f"🎲 [bold yellow]{result}[/]")
 
 
 @click.command()
 @click.argument("dice")
-@click.option("-v", "verbose", help="Verbose output. Show the arithmetic operation.", is_flag=True)
+@click.option("-d", "--details", help="Show every roll and the complete formula.", is_flag=True)
+@click.option("--plain", help="Disable styling and emojis for plain-text output.", is_flag=True)
 @click.version_option(__version__)
-def _roll(dice: str, verbose: bool) -> None:
+def _roll(dice: str, details: bool, plain: bool) -> None:
     """
     Allows you to roll dice from your terminal.
 
@@ -27,12 +94,13 @@ def _roll(dice: str, verbose: bool) -> None:
          roll 1d20-4  # roll a d20 die with a -4 modifier
     """
     try:
-        operation, result = roll(dice)
-        if verbose:
-            console = Console()
-            console.print(f"{operation}={result}")
+        rolled = roll_details(dice)
+        if details:
+            _show_details(rolled, plain)
         else:
-            print(f"{result}")
+            _show_result(rolled.result, plain)
     except InvalidDiceError as e:
-        print(f"Invalid operation: {e}")
-        sys.exit(-1)
+        if plain:
+            raise click.ClickException(f"Invalid roll: {e}") from e
+        Console(stderr=True).print(f"❌ [bold red]Invalid roll:[/] {e}")
+        raise click.exceptions.Exit(1) from e
