@@ -17,12 +17,18 @@ from dming.conversion import (
     inches_to_squares,
     miles_to_kilometers,
     miles_to_squares,
-    pounds_to_grams,
     pounds_to_kilograms,
     sorted_unique,
 )
 from dming.dice import DiceGroup, InvalidDiceError, RollDetails, roll_details
 from dming.probability import InvalidProbabilityError, parse_die, probability_rows
+from dming.rules import (
+    ABILITY_MODIFIERS,
+    CARRYING_CAPACITIES,
+    CREATURE_SIZES,
+    DIFFICULTY_CLASSES,
+    PROFICIENCY_BONUSES,
+)
 
 FILTER_LABELS = {
     "kh": "keep highest",
@@ -164,8 +170,8 @@ def _show_distance_tables(
         tables.append(
             _distance_table(
                 "Inches to Meters",
-                "Inches",
-                "Meters",
+                "Inches\n(in.)",
+                "Meters\n(m.)",
                 values,
                 inches_to_meters,
                 inches_to_squares,
@@ -176,8 +182,8 @@ def _show_distance_tables(
         tables.append(
             _distance_table(
                 "Feet to Meters",
-                "Feet",
-                "Meters",
+                "Feet\n(ft.)",
+                "Meters\n(m.)",
                 values,
                 feet_to_meters,
                 feet_to_squares,
@@ -188,8 +194,8 @@ def _show_distance_tables(
         tables.append(
             _distance_table(
                 "Miles to Kilometers",
-                "Miles",
-                "Kilometers",
+                "Miles\n(mi.)",
+                "Kilometers\n(km.)",
                 values,
                 miles_to_kilometers,
                 miles_to_squares,
@@ -206,20 +212,45 @@ def _show_distance_tables(
 def _show_weight_table(pounds: tuple[float, ...]) -> None:
     values = sorted_unique(pounds) if pounds else DEFAULT_POUNDS
     table = Table(
-        title="⚖️ Pounds to Metric",
+        title="⚖️ Pounds to Kilograms",
         header_style="bold magenta",
         width=CONVERSION_TABLE_WIDTH,
     )
-    table.add_column("Pounds", justify="right", style="cyan")
-    table.add_column("Grams", justify="right", style="green")
-    table.add_column("Kilograms", justify="right", style="yellow")
+    table.add_column("Pounds (lb.)", justify="right", style="cyan")
+    table.add_column("Kilograms (kg.)", justify="right", style="green")
     for value in values:
         table.add_row(
             _format_source(value),
-            f"{pounds_to_grams(value):.2f}",
             f"{pounds_to_kilograms(value):.2f}",
         )
     Console().print(table)
+
+
+def _show_rules_table(
+    title: str,
+    columns: tuple[str, ...],
+    rows: tuple[tuple[str, ...], ...],
+    right_align_first: bool = False,
+) -> None:
+    table_title = f"📖 {title} · 2024"
+    table = Table(
+        title=table_title,
+        header_style="bold magenta",
+        min_width=len(table_title) + 2,
+    )
+    for index, column in enumerate(columns):
+        style = "cyan" if index == 0 else "green"
+        if index or right_align_first:
+            table.add_column(column, justify="right", style=style)
+        else:
+            table.add_column(column, justify="left", style=style)
+    for row in rows:
+        table.add_row(*row)
+    Console().print(table)
+
+
+def _signed(value: int) -> str:
+    return f"{value:+d}".replace("-", "−")
 
 
 @click.command()
@@ -302,8 +333,73 @@ def _distance(
 @_convert.command("weight")
 @click.option("--pound", "pounds", type=POSITIVE_FLOAT, multiple=True, help="Custom pounds.")
 def _weight(pounds: tuple[float, ...]) -> None:
-    """Convert pounds to grams and kilograms."""
+    """Convert pounds to kilograms."""
     _show_weight_table(pounds)
+
+
+@click.group("rules", invoke_without_command=True)
+@click.pass_context
+def _rules(context: click.Context) -> None:
+    """Show official 2024 D&D rules reference tables."""
+    if context.invoked_subcommand is None:
+        click.echo(context.get_help())
+
+
+@_rules.command("abilities")
+def _abilities() -> None:
+    """Show ability scores and their modifiers."""
+    rows = tuple((score, _signed(modifier)) for score, modifier in ABILITY_MODIFIERS)
+    _show_rules_table("Ability Modifiers", ("Score", "Modifier"), rows, right_align_first=True)
+
+
+@_rules.command("difficulty")
+def _difficulty() -> None:
+    """Show typical Difficulty Classes."""
+    rows = tuple((difficulty, str(dc)) for difficulty, dc in DIFFICULTY_CLASSES)
+    _show_rules_table("Typical Difficulty Classes", ("Task Difficulty", "DC"), rows)
+
+
+@_rules.command("proficiency")
+def _proficiency() -> None:
+    """Show Proficiency Bonus by level or Challenge Rating."""
+    rows = tuple((level, _signed(bonus)) for level, bonus in PROFICIENCY_BONUSES)
+    _show_rules_table("Proficiency Bonus", ("Level or CR", "Bonus"), rows, right_align_first=True)
+
+
+@_rules.command("sizes")
+def _sizes() -> None:
+    """Show creature sizes and the space they control."""
+    _show_rules_table(
+        "Creature Size and Space",
+        ("Size", "Space (ft.)", "Space (m.)", "Space (Squares)"),
+        CREATURE_SIZES,
+    )
+
+
+@_rules.command("carrying")
+def _carrying() -> None:
+    """Show carrying and drag, lift, or push capacity by creature size."""
+    rows = tuple(
+        (
+            size,
+            f"Str. × {_format_source(carry)}",
+            f"Str. × {pounds_to_kilograms(carry):.2f}",
+            f"Str. × {_format_source(drag)}",
+            f"Str. × {pounds_to_kilograms(drag):.2f}",
+        )
+        for size, carry, drag in CARRYING_CAPACITIES
+    )
+    _show_rules_table(
+        "Carrying Capacity",
+        (
+            "Creature Size",
+            "Carry\n(lb.)",
+            "Carry\n(kg.)",
+            "Drag/Lift/Push\n(lb.)",
+            "Drag/Lift/Push\n(kg.)",
+        ),
+        rows,
+    )
 
 
 @click.group()
@@ -315,3 +411,4 @@ def dming() -> None:
 dming.add_command(_roll, name="roll")
 dming.add_command(_chance)
 dming.add_command(_convert)
+dming.add_command(_rules)

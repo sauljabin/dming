@@ -93,7 +93,8 @@ $ dming convert weight
 
 Distance prints separate tables for inches, feet, and miles. The `Squares`
 column expresses each distance as a number of 5-foot grid spaces. Weight shows
-pounds in both grams and kilograms.
+pounds converted to kilograms. Measurement units appear in the table headers,
+such as `(ft.)`, `(m.)`, `(lb.)`, and `(kg.)`.
 
 Supply repeatable unit options to build a table from custom values. When any
 custom values are supplied, only the requested unit tables are shown.
@@ -103,6 +104,29 @@ $ dming convert distance --foot 5 --foot 30
 $ dming convert distance --inch 6 --mile 1
 $ dming convert weight --pound 2.5 --pound 10
 ```
+
+### 2024 Rules References
+
+Use `dming rules` for fixed Rich tables from the official 2024 D&D rules.
+
+```console
+$ dming rules abilities
+$ dming rules carrying
+$ dming rules difficulty
+$ dming rules proficiency
+$ dming rules sizes
+```
+
+Each table is based on an official 2024 rule:
+
+- [Ability Modifiers](https://www.dndbeyond.com/sources/dnd/br-2024/playing-the-game#AbilityModifiers)
+- [Typical Difficulty Classes](https://www.dndbeyond.com/sources/dnd/br-2024/playing-the-game#DifficultyClass)
+- [Proficiency Bonus by Level or Challenge Rating](https://www.dndbeyond.com/sources/dnd/br-2024/how-to-use-a-monster#ProficiencyBonus)
+- [Creature Size and Space](https://www.dndbeyond.com/sources/dnd/br-2024/playing-the-game#CreatureSize)
+- [Carrying Capacity](https://www.dndbeyond.com/sources/dnd/br-2024/rules-glossary#CarryingCapacity)
+
+Creature sizes also include metric dimensions. Carrying-capacity entries also
+include kilogram equivalents for carrying and for dragging, lifting, or pushing.
 
 ### Using the Library
 

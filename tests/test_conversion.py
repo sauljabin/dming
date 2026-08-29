@@ -61,6 +61,9 @@ class TestConversionCli(unittest.TestCase):
         self.assertIn("📏 Inches to Meters", result.output)
         self.assertIn("📏 Feet to Meters", result.output)
         self.assertIn("📏 Miles to Kilometers", result.output)
+        for abbreviation in ("(in.)", "(ft.)", "(mi.)", "(m.)", "(km.)"):
+            with self.subTest(abbreviation=abbreviation):
+                self.assertIn(abbreviation, result.output)
         self.assertIn("Squares", result.output)
 
     def test_all_conversion_tables_have_the_same_width(self):
@@ -83,14 +86,14 @@ class TestConversionCli(unittest.TestCase):
         self.assertNotIn("Inches to Meters", result.output)
         self.assertNotIn("Miles to Kilometers", result.output)
 
-    def test_weight_defaults_render_metric_columns(self):
+    def test_weight_defaults_render_kilograms(self):
         result = CliRunner().invoke(_weight)
 
         self.assertEqual(0, result.exit_code)
-        self.assertIn("⚖️ Pounds to Metric", result.output)
-        self.assertIn("Grams", result.output)
-        self.assertIn("Kilograms", result.output)
-        self.assertIn("453.59", result.output)
+        self.assertIn("⚖️ Pounds to Kilograms", result.output)
+        self.assertIn("Pounds (lb.)", result.output)
+        self.assertIn("Kilograms (kg.)", result.output)
+        self.assertNotIn("Grams", result.output)
         self.assertIn("0.45", result.output)
 
     def test_custom_weight_values_are_rendered(self):
@@ -98,7 +101,6 @@ class TestConversionCli(unittest.TestCase):
 
         self.assertEqual(0, result.exit_code)
         self.assertIn("2.5", result.output)
-        self.assertIn("1133.98", result.output)
         self.assertIn("1.13", result.output)
 
     def test_rejects_nonpositive_custom_values(self):

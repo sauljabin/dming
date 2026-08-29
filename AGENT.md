@@ -21,6 +21,13 @@
   a backward-compatible alias for `dming roll`.
 - Chance tables use `dming chance`; do not restore the removed `dming table`
   command.
+- Conversion tables use `dming convert`, remain Rich-only and equal-width, and
+  put unit abbreviations in column headers. Distance includes 5-foot Squares;
+  weight converts pounds to kilograms without a grams column.
+- Official 2024 D&D reference tables use the `dming rules` command family and
+  must remain aligned with the linked official D&D Beyond sources. Creature
+  sizes include feet, meters, and Squares; carrying capacity includes pound and
+  kilogram Strength multipliers.
 
 ## Code Quality and Verification
 
