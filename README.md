@@ -12,6 +12,9 @@ pipx install dming
 
 ## Usage
 
+DMing provides a grouped command for all tools. The standalone `roll` command
+remains available as a shortcut for `dming roll`.
+
 ### Roll Dice
 
 > [!WARNING]
@@ -59,6 +62,23 @@ Result: 8
 > `kl`: keep lowest \
 > `dh`: drop highest \
 > `dl`: drop lowest
+
+### Probability Tables
+
+Use `dming table <die>` to show the chance of meeting or exceeding each target
+with a standard roll, advantage, or disadvantage. Tables support one die with
+an optional modifier.
+
+```console
+$ dming table d20
+$ dming table d20+5
+$ dming table d20-3 --min-target 5 --max-target 30
+```
+
+The default range starts at target 1 and ends at the greater of the die size or
+the highest modified total. Override either boundary with `--min-target` and
+`--max-target`. Percentages use ordinary threshold rules; natural minimum and
+maximum rolls do not introduce automatic failure or success rules.
 
 ### Using the Library
 

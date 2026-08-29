@@ -15,6 +15,11 @@
 - DMing must work consistently on Linux and macOS with Python 3.13 and 3.14.
 - Keep paths and shell-facing documentation portable across both platforms.
 
+## CLI Compatibility
+
+- `dming` is the grouped CLI entry point. Keep the standalone `roll` command as
+  a backward-compatible alias for `dming roll`.
+
 ## Code Quality and Verification
 
 - Keep cyclomatic complexity at or below 10. The repository-wide Ruff `C901`

@@ -1,9 +1,11 @@
 import click
 from rich.console import Console
+from rich.table import Table
 from rich.text import Text
 
 from dming import __version__
 from dming.dice import DiceGroup, InvalidDiceError, RollDetails, roll_details
+from dming.probability import InvalidProbabilityError, parse_die, probability_rows
 
 FILTER_LABELS = {
     "kh": "keep highest",
@@ -73,6 +75,28 @@ def _show_result(result: int, plain: bool) -> None:
     Console().print(f"🎲 [bold yellow]{result}[/]")
 
 
+def _percentage(value: float) -> str:
+    return f"{value:.2%}"
+
+
+def _show_probability_table(dice: str, min_target: int, max_target: int | None) -> None:
+    spec = parse_die(dice)
+    rows = probability_rows(spec, min_target, max_target)
+    table = Table(title=f"🎲 Probability · {spec.expression}", header_style="bold magenta")
+    table.add_column("Target", justify="right", style="bold")
+    table.add_column(spec.expression, justify="right", style="cyan")
+    table.add_column("Advantage", justify="right", style="green")
+    table.add_column("Disadvantage", justify="right", style="red")
+    for row in rows:
+        table.add_row(
+            str(row.target),
+            _percentage(row.standard),
+            _percentage(row.advantage),
+            _percentage(row.disadvantage),
+        )
+    Console().print(table)
+
+
 @click.command()
 @click.argument("dice")
 @click.option("-d", "--details", help="Show every roll and the complete formula.", is_flag=True)
@@ -104,3 +128,36 @@ def _roll(dice: str, details: bool, plain: bool) -> None:
             raise click.ClickException(f"Invalid roll: {e}") from e
         Console(stderr=True).print(f"❌ [bold red]Invalid roll:[/] {e}")
         raise click.exceptions.Exit(1) from e
+
+
+@click.command("table")
+@click.argument("dice")
+@click.option(
+    "--min-target",
+    type=click.IntRange(min=1),
+    default=1,
+    show_default=True,
+    help="First target to include.",
+)
+@click.option(
+    "--max-target",
+    type=click.IntRange(min=1),
+    help="Last target to include.",
+)
+def _table(dice: str, min_target: int, max_target: int | None) -> None:
+    """Show success probabilities for a single die and optional modifier."""
+    try:
+        _show_probability_table(dice, min_target, max_target)
+    except InvalidProbabilityError as e:
+        Console(stderr=True).print(f"❌ [bold red]Invalid probability table:[/] {e}")
+        raise click.exceptions.Exit(1) from e
+
+
+@click.group()
+@click.version_option(__version__)
+def dming() -> None:
+    """Tools for running tabletop role-playing games."""
+
+
+dming.add_command(_roll, name="roll")
+dming.add_command(_table)
