@@ -19,6 +19,8 @@
 
 - `dming` is the grouped CLI entry point. Keep the standalone `roll` command as
   a backward-compatible alias for `dming roll`.
+- Chance tables use `dming chance`; do not restore the removed `dming table`
+  command.
 
 ## Code Quality and Verification
 

@@ -63,23 +63,46 @@ Result: 8
 > `dh`: drop highest \
 > `dl`: drop lowest
 
-### Probability Tables
+### Chance Tables
 
-Use `dming table <die>` to show the chance of meeting or exceeding each target
+Use `dming chance <die>` to show the chance of meeting or exceeding each target
 with a standard roll, advantage, or disadvantage. Tables support one die with
 an optional modifier. The `Roll Needed` column shows the lowest natural roll
 that reaches each target.
 
 ```console
-$ dming table d20
-$ dming table d20+5
-$ dming table d20-3 --min-target 5 --max-target 30
+$ dming chance d20
+$ dming chance d20+5
+$ dming chance d20-3 --min-target 5 --max-target 30
 ```
 
 The default range starts at target 1 and ends at the greater of the die size or
 the highest modified total. Override either boundary with `--min-target` and
 `--max-target`. Percentages use ordinary threshold rules; natural minimum and
 maximum rolls do not introduce automatic failure or success rules.
+
+### Unit Conversions
+
+Use `dming convert` to show Rich reference tables that convert common US
+customary measurements to metric units.
+
+```console
+$ dming convert distance
+$ dming convert weight
+```
+
+Distance prints separate tables for inches, feet, and miles. The `Squares`
+column expresses each distance as a number of 5-foot grid spaces. Weight shows
+pounds in both grams and kilograms.
+
+Supply repeatable unit options to build a table from custom values. When any
+custom values are supplied, only the requested unit tables are shown.
+
+```console
+$ dming convert distance --foot 5 --foot 30
+$ dming convert distance --inch 6 --mile 1
+$ dming convert weight --pound 2.5 --pound 10
+```
 
 ### Using the Library
 

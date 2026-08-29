@@ -1,9 +1,26 @@
+from collections.abc import Callable
+
 import click
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
 from dming import __version__
+from dming.conversion import (
+    DEFAULT_FEET,
+    DEFAULT_INCHES,
+    DEFAULT_MILES,
+    DEFAULT_POUNDS,
+    feet_to_meters,
+    feet_to_squares,
+    inches_to_meters,
+    inches_to_squares,
+    miles_to_kilometers,
+    miles_to_squares,
+    pounds_to_grams,
+    pounds_to_kilograms,
+    sorted_unique,
+)
 from dming.dice import DiceGroup, InvalidDiceError, RollDetails, roll_details
 from dming.probability import InvalidProbabilityError, parse_die, probability_rows
 
@@ -13,6 +30,7 @@ FILTER_LABELS = {
     "dh": "drop highest",
     "dl": "drop lowest",
 }
+CONVERSION_TABLE_WIDTH = 36
 
 
 def _plain_line(label: str, value: str | int, width: int) -> str:
@@ -85,10 +103,10 @@ def _minimum_roll(value: int | None) -> str:
     return f"{value}+"
 
 
-def _show_probability_table(dice: str, min_target: int, max_target: int | None) -> None:
+def _show_chance_table(dice: str, min_target: int, max_target: int | None) -> None:
     spec = parse_die(dice)
     rows = probability_rows(spec, min_target, max_target)
-    table = Table(title=f"🎲 Probability · {spec.expression}", header_style="bold magenta")
+    table = Table(title=f"🎲 Chance · {spec.expression}", header_style="bold magenta")
     table.add_column("Target", justify="right", style="bold")
     table.add_column("Roll Needed", justify="right", style="yellow")
     table.add_column(spec.expression, justify="right", style="cyan")
@@ -101,6 +119,105 @@ def _show_probability_table(dice: str, min_target: int, max_target: int | None) 
             _percentage(row.standard),
             _percentage(row.advantage),
             _percentage(row.disadvantage),
+        )
+    Console().print(table)
+
+
+def _format_source(value: float) -> str:
+    return f"{value:.10f}".rstrip("0").rstrip(".")
+
+
+def _distance_table(
+    title: str,
+    source_label: str,
+    metric_label: str,
+    values: tuple[float, ...],
+    metric_conversion: Callable[[float], float],
+    square_conversion: Callable[[float], float],
+) -> Table:
+    table = Table(
+        title=f"📏 {title}",
+        header_style="bold magenta",
+        width=CONVERSION_TABLE_WIDTH,
+    )
+    table.add_column(source_label, justify="right", style="cyan")
+    table.add_column(metric_label, justify="right", style="green")
+    table.add_column("Squares", justify="right", style="yellow")
+    for value in values:
+        table.add_row(
+            _format_source(value),
+            f"{metric_conversion(value):.2f}",
+            f"{square_conversion(value):.2f}",
+        )
+    return table
+
+
+def _show_distance_tables(
+    inches: tuple[float, ...],
+    feet: tuple[float, ...],
+    miles: tuple[float, ...],
+) -> None:
+    custom_values = bool(inches or feet or miles)
+    tables = []
+    if inches or not custom_values:
+        values = sorted_unique(inches) if inches else DEFAULT_INCHES
+        tables.append(
+            _distance_table(
+                "Inches to Meters",
+                "Inches",
+                "Meters",
+                values,
+                inches_to_meters,
+                inches_to_squares,
+            )
+        )
+    if feet or not custom_values:
+        values = sorted_unique(feet) if feet else DEFAULT_FEET
+        tables.append(
+            _distance_table(
+                "Feet to Meters",
+                "Feet",
+                "Meters",
+                values,
+                feet_to_meters,
+                feet_to_squares,
+            )
+        )
+    if miles or not custom_values:
+        values = sorted_unique(miles) if miles else DEFAULT_MILES
+        tables.append(
+            _distance_table(
+                "Miles to Kilometers",
+                "Miles",
+                "Kilometers",
+                values,
+                miles_to_kilometers,
+                miles_to_squares,
+            )
+        )
+
+    console = Console()
+    for index, table in enumerate(tables):
+        if index:
+            console.print()
+        console.print(table)
+
+
+def _show_weight_table(pounds: tuple[float, ...]) -> None:
+    values = sorted_unique(pounds) if pounds else DEFAULT_POUNDS
+    table = Table(
+        title="⚖️ Pounds to Metric",
+        header_style="bold magenta",
+        width=CONVERSION_TABLE_WIDTH,
+    )
+    table.add_column("Pounds", justify="right", style="cyan")
+    table.add_column("Grams", justify="right", style="green")
+    table.add_column("Kilograms", justify="right", style="yellow")
+    for value in values:
+        table.add_row(
+            _format_source(value),
+            f"{pounds_to_grams(value):.2f}",
+            f"{pounds_to_kilograms(value):.2f}",
         )
     Console().print(table)
 
@@ -138,7 +255,7 @@ def _roll(dice: str, details: bool, plain: bool) -> None:
         raise click.exceptions.Exit(1) from e
 
 
-@click.command("table")
+@click.command("chance")
 @click.argument("dice")
 @click.option(
     "--min-target",
@@ -152,13 +269,41 @@ def _roll(dice: str, details: bool, plain: bool) -> None:
     type=click.IntRange(min=1),
     help="Last target to include.",
 )
-def _table(dice: str, min_target: int, max_target: int | None) -> None:
-    """Show success probabilities for a single die and optional modifier."""
+def _chance(dice: str, min_target: int, max_target: int | None) -> None:
+    """Show success chances for a single die and optional modifier."""
     try:
-        _show_probability_table(dice, min_target, max_target)
+        _show_chance_table(dice, min_target, max_target)
     except InvalidProbabilityError as e:
-        Console(stderr=True).print(f"❌ [bold red]Invalid probability table:[/] {e}")
+        Console(stderr=True).print(f"❌ [bold red]Invalid chance table:[/] {e}")
         raise click.exceptions.Exit(1) from e
+
+
+POSITIVE_FLOAT = click.FloatRange(min=0, min_open=True)
+
+
+@click.group("convert")
+def _convert() -> None:
+    """Show US customary to metric conversion tables."""
+
+
+@_convert.command("distance")
+@click.option("--inch", "inches", type=POSITIVE_FLOAT, multiple=True, help="Custom inches.")
+@click.option("--foot", "feet", type=POSITIVE_FLOAT, multiple=True, help="Custom feet.")
+@click.option("--mile", "miles", type=POSITIVE_FLOAT, multiple=True, help="Custom miles.")
+def _distance(
+    inches: tuple[float, ...],
+    feet: tuple[float, ...],
+    miles: tuple[float, ...],
+) -> None:
+    """Convert distances and show their 5-foot Square equivalents."""
+    _show_distance_tables(inches, feet, miles)
+
+
+@_convert.command("weight")
+@click.option("--pound", "pounds", type=POSITIVE_FLOAT, multiple=True, help="Custom pounds.")
+def _weight(pounds: tuple[float, ...]) -> None:
+    """Convert pounds to grams and kilograms."""
+    _show_weight_table(pounds)
 
 
 @click.group()
@@ -168,4 +313,5 @@ def dming() -> None:
 
 
 dming.add_command(_roll, name="roll")
-dming.add_command(_table)
+dming.add_command(_chance)
+dming.add_command(_convert)

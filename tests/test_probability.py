@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from click.testing import CliRunner
 
-from dming.cli import _table, dming
+from dming.cli import _chance, dming
 from dming.probability import (
     InvalidProbabilityError,
     parse_die,
@@ -75,11 +75,14 @@ class TestProbability(unittest.TestCase):
 
 
 class TestProbabilityCli(unittest.TestCase):
-    def test_table_renders_rich_probabilities(self):
-        result = CliRunner().invoke(_table, ["d20", "--min-target", "10", "--max-target", "10"])
+    def test_chance_renders_rich_probabilities(self):
+        result = CliRunner().invoke(
+            _chance,
+            ["d20", "--min-target", "10", "--max-target", "10"],
+        )
 
         self.assertEqual(0, result.exit_code)
-        self.assertIn("🎲 Probability · d20", result.output)
+        self.assertIn("🎲 Chance · d20", result.output)
         self.assertIn("Target", result.output)
         self.assertIn("Roll Needed", result.output)
         self.assertIn("Advantage", result.output)
@@ -88,18 +91,18 @@ class TestProbabilityCli(unittest.TestCase):
         self.assertIn("79.75%", result.output)
         self.assertIn("30.25%", result.output)
 
-    def test_table_shows_lowest_roll_needed(self):
+    def test_chance_shows_lowest_roll_needed(self):
         result = CliRunner().invoke(
-            _table,
+            _chance,
             ["d20+4", "--min-target", "10", "--max-target", "10"],
         )
 
         self.assertEqual(0, result.exit_code)
         self.assertIn("6+", result.output)
 
-    def test_table_labels_guaranteed_and_impossible_rolls(self):
+    def test_chance_labels_guaranteed_and_impossible_rolls(self):
         result = CliRunner().invoke(
-            _table,
+            _chance,
             ["d20+4", "--min-target", "1", "--max-target", "25"],
         )
 
@@ -107,9 +110,9 @@ class TestProbabilityCli(unittest.TestCase):
         self.assertIn("1+", result.output)
         self.assertIn("Impossible", result.output)
 
-    def test_table_uses_modified_expression_as_column(self):
+    def test_chance_uses_modified_expression_as_column(self):
         result = CliRunner().invoke(
-            _table,
+            _chance,
             ["d20+5", "--min-target", "25", "--max-target", "25"],
         )
 
@@ -119,17 +122,17 @@ class TestProbabilityCli(unittest.TestCase):
         self.assertIn("9.75%", result.output)
         self.assertIn("0.25%", result.output)
 
-    def test_table_rejects_inverted_range(self):
+    def test_chance_rejects_inverted_range(self):
         result = CliRunner().invoke(
-            _table,
+            _chance,
             ["d20", "--min-target", "10", "--max-target", "5"],
         )
 
         self.assertEqual(1, result.exit_code)
         self.assertIn("minimum target cannot exceed maximum target", result.output)
 
-    def test_table_rejects_nonpositive_target_option(self):
-        result = CliRunner().invoke(_table, ["d20", "--min-target", "0"])
+    def test_chance_rejects_nonpositive_target_option(self):
+        result = CliRunner().invoke(_chance, ["d20", "--min-target", "0"])
 
         self.assertEqual(2, result.exit_code)
         self.assertIn("0 is not in the range x>=1", result.output)
@@ -143,9 +146,16 @@ class TestProbabilityCli(unittest.TestCase):
         self.assertEqual(0, result.exit_code)
         self.assertEqual("12\n", result.output)
 
-    def test_group_exposes_table_and_roll(self):
+    def test_group_exposes_chance_convert_and_roll(self):
         result = CliRunner().invoke(dming, ["--help"])
 
         self.assertEqual(0, result.exit_code)
+        self.assertIn("chance", result.output)
+        self.assertIn("convert", result.output)
         self.assertIn("roll", result.output)
-        self.assertIn("table", result.output)
+
+    def test_group_rejects_removed_table_command(self):
+        result = CliRunner().invoke(dming, ["table", "d20"])
+
+        self.assertEqual(2, result.exit_code)
+        self.assertIn("No such command 'table'", result.output)
