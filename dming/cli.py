@@ -79,17 +79,25 @@ def _percentage(value: float) -> str:
     return f"{value:.2%}"
 
 
+def _minimum_roll(value: int | None) -> str:
+    if value is None:
+        return "Impossible"
+    return f"{value}+"
+
+
 def _show_probability_table(dice: str, min_target: int, max_target: int | None) -> None:
     spec = parse_die(dice)
     rows = probability_rows(spec, min_target, max_target)
     table = Table(title=f"🎲 Probability · {spec.expression}", header_style="bold magenta")
     table.add_column("Target", justify="right", style="bold")
+    table.add_column("Roll Needed", justify="right", style="yellow")
     table.add_column(spec.expression, justify="right", style="cyan")
     table.add_column("Advantage", justify="right", style="green")
     table.add_column("Disadvantage", justify="right", style="red")
     for row in rows:
         table.add_row(
             str(row.target),
+            _minimum_roll(row.minimum_roll),
             _percentage(row.standard),
             _percentage(row.advantage),
             _percentage(row.disadvantage),

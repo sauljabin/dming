@@ -16,6 +16,7 @@ class DieSpec:
 @dataclass(frozen=True)
 class ProbabilityRow:
     target: int
+    minimum_roll: int | None
     standard: float
     advantage: float
     disadvantage: float
@@ -56,9 +57,11 @@ def probability_rows(
     rows = []
     for target in range(min_target, maximum + 1):
         standard = success_probability(spec, target)
+        required_roll = target - spec.modifier
         rows.append(
             ProbabilityRow(
                 target=target,
+                minimum_roll=max(required_roll, 1) if required_roll <= spec.sides else None,
                 standard=standard,
                 advantage=1 - (1 - standard) ** 2,
                 disadvantage=standard**2,

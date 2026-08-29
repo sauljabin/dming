@@ -67,7 +67,8 @@ Result: 8
 
 Use `dming table <die>` to show the chance of meeting or exceeding each target
 with a standard roll, advantage, or disadvantage. Tables support one die with
-an optional modifier.
+an optional modifier. The `Roll Needed` column shows the lowest natural roll
+that reaches each target.
 
 ```console
 $ dming table d20

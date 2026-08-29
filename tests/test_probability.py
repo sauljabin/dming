@@ -41,6 +41,13 @@ class TestProbability(unittest.TestCase):
         self.assertEqual(0.05, success_probability(negative, 15))
         self.assertEqual(0.0, success_probability(negative, 20))
 
+    def test_rows_include_the_minimum_natural_roll(self):
+        rows = {row.target: row for row in probability_rows(parse_die("d20+4"), max_target=25)}
+
+        self.assertEqual(1, rows[1].minimum_roll)
+        self.assertEqual(6, rows[10].minimum_roll)
+        self.assertIsNone(rows[25].minimum_roll)
+
     def test_default_target_range_accounts_for_modifier(self):
         self.assertEqual(tuple(range(1, 26)), self._targets(probability_rows(parse_die("d20+5"))))
         self.assertEqual(tuple(range(1, 21)), self._targets(probability_rows(parse_die("d20-5"))))
@@ -74,11 +81,31 @@ class TestProbabilityCli(unittest.TestCase):
         self.assertEqual(0, result.exit_code)
         self.assertIn("🎲 Probability · d20", result.output)
         self.assertIn("Target", result.output)
+        self.assertIn("Roll Needed", result.output)
         self.assertIn("Advantage", result.output)
         self.assertIn("Disadvantage", result.output)
         self.assertIn("55.00%", result.output)
         self.assertIn("79.75%", result.output)
         self.assertIn("30.25%", result.output)
+
+    def test_table_shows_lowest_roll_needed(self):
+        result = CliRunner().invoke(
+            _table,
+            ["d20+4", "--min-target", "10", "--max-target", "10"],
+        )
+
+        self.assertEqual(0, result.exit_code)
+        self.assertIn("6+", result.output)
+
+    def test_table_labels_guaranteed_and_impossible_rolls(self):
+        result = CliRunner().invoke(
+            _table,
+            ["d20+4", "--min-target", "1", "--max-target", "25"],
+        )
+
+        self.assertEqual(0, result.exit_code)
+        self.assertIn("1+", result.output)
+        self.assertIn("Impossible", result.output)
 
     def test_table_uses_modified_expression_as_column(self):
         result = CliRunner().invoke(
