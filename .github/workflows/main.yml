@@ -82,8 +82,22 @@ jobs:
           enable-cache: true
       - name: Verify lockfile
         run: uv lock --check
+      - name: Sync dependencies
+        run: uv sync --locked
       - name: Build distributions
         run: uv build --clear
+      - name: Verify distributions
+        run: |
+          package_version=$(uv run --locked python -c 'from dming import __version__; print(__version__)')
+          uv run --locked python -m scripts.verify_release "$package_version" dist
+      - name: Install and smoke-test wheel
+        run: |
+          uv venv "$RUNNER_TEMP/package-venv" --python 3.13
+          uv pip install --python "$RUNNER_TEMP/package-venv/bin/python" dist/*.whl
+          "$RUNNER_TEMP/package-venv/bin/dming" --help
+          "$RUNNER_TEMP/package-venv/bin/dming" rules advancement --format json
+          "$RUNNER_TEMP/package-venv/bin/dming" convert feet 5 --format csv
+          "$RUNNER_TEMP/package-venv/bin/roll" d1 --format csv
 
   result:
     name: CI result

@@ -28,8 +28,9 @@ Run the grouped DMing CLI:
 uv run dming --help
 uv run dming roll 2d20kh1
 uv run dming chance d20+5
-uv run dming convert distance
-uv run dming convert weight
+uv run dming convert feet
+uv run dming convert pounds
+uv run dming rules advancement
 uv run dming rules sizes
 ```
 
@@ -41,14 +42,16 @@ shortcut for `uv run dming roll <dice>`.
 - `dming roll` handles dice expressions; only roll output supports `--details`
   and `--plain`.
 - `dming chance` renders single-die threshold probabilities.
-- `dming convert distance` renders inches, feet, and miles in metric units and
-  5-foot Squares. `dming convert weight` renders pounds in kilograms.
-- `dming rules` renders immutable 2024 D&D reference data for abilities,
-  carrying capacity, Difficulty Classes, Proficiency Bonus, and creature sizes.
+- `dming convert inches|feet|miles|pounds [VALUE ...]` renders one conversion
+  table, using defaults when values are omitted.
+- `dming rules` renders immutable SRD 5.2.1 reference data for abilities,
+  advancement, carrying capacity, Difficulty Classes, Proficiency Bonus, and
+  creature sizes.
 
-Chance, conversion, and rules tables are Rich-only. Measurement columns put
-their unit abbreviations in the headers. All conversion tables share one width,
-and creature-size references show both feet and meters.
+Every leaf command accepts `--format rich|plain|json|csv`. Root-level format
+selection is inherited and a leaf-level selection takes precedence. Measurement
+columns put their unit abbreviations in the headers. All conversion tables share
+one width, and creature-size references show both feet and meters.
 
 ## Verification
 

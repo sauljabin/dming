@@ -3,8 +3,8 @@ from scripts import CommandProcessor
 
 def main() -> None:
     commands = {
-        "black": "black . --preview",
-        "ruff": "ruff check . --fix",
+        "black": ("black", ".", "--preview"),
+        "ruff": ("ruff", "check", ".", "--fix"),
     }
     CommandProcessor(commands).run()
 

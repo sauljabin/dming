@@ -2,8 +2,6 @@
 
 DMing is a CLI (command-line interface) collection useful when running a TTRPG (tabletop role-playing game).
 
-> *[DMing](https://en.wiktionary.org/wiki/DMing)([Dungeon Mastering](https://en.wiktionary.org/wiki/Dungeon_Mastering#English)): Performing as a dungeon master, or running a tabletop role-playing game, especially Dungeons & Dragons.*
-
 ## Installation
 
 ```sh
@@ -13,7 +11,14 @@ pipx install dming
 ## Usage
 
 DMing provides a grouped command for all tools. The standalone `roll` command
-remains available as a shortcut for `dming roll`.
+remains available as a shortcut for `dming roll`. Every leaf command supports
+`--format rich|plain|json|csv`; the default is `rich`. The option can appear on
+the root command or the leaf command, and the leaf value takes precedence.
+
+```console
+$ dming --format json rules advancement
+$ dming chance d20 --format csv
+```
 
 ### Roll Dice
 
@@ -34,27 +39,28 @@ Examples:
 * `roll 1d20-4`: roll a d20 die with a -4 modifier
 
 Add `-d` or `--details` to show every die, which dice were selected by a keep or
-drop filter, and the complete arithmetic formula. Use `--plain` for output
-without styling or emojis.
+drop filter, and the complete calculation. Use `--plain` as a shortcut
+for `--format plain`. JSON emits one object; CSV emits one result row and stores
+detailed groups as compact JSON in a quoted cell.
 
 ```console
 $ roll --details 2d20kh1
 🎲 2d20kh1
 ├─ 2d20kh1: 19, 9 → 19 (keep highest 1)
-├─ Math: 19
+├─ Calculation: 19
 └─ Result: 19
 
 $ roll --details 2d20
 🎲 2d20
 ├─ 2d20: 4, 4
-├─ Math: 4 + 4
+├─ Calculation: 4 + 4
 └─ Result: 8
 
 $ roll --details --plain 2d20
-Roll:   2d20
-2d20:   4, 4
-Math:   4 + 4
-Result: 8
+Roll:        2d20
+2d20:        4, 4
+Calculation: 4 + 4
+Result:      8
 ```
 
 > [!NOTE]
@@ -83,47 +89,46 @@ maximum rolls do not introduce automatic failure or success rules.
 
 ### Unit Conversions
 
-Use `dming convert` to show Rich reference tables that convert common US
-customary measurements to metric units.
+Use a unit-specific `dming convert` command to convert common US customary
+measurements to metric units.
 
 ```console
-$ dming convert distance
-$ dming convert weight
+$ dming convert inches
+$ dming convert feet
+$ dming convert miles
+$ dming convert pounds
 ```
 
-Distance prints separate tables for inches, feet, and miles. The `Squares`
-column expresses each distance as a number of 5-foot grid spaces. Weight shows
-pounds converted to kilograms. Measurement units appear in the table headers,
-such as `(ft.)`, `(m.)`, `(lb.)`, and `(kg.)`.
+The `Squares` column expresses each distance as a number of 5-foot grid spaces.
+Pounds are converted to kilograms. Measurement units appear in the table
+headers, such as `(ft.)`, `(m.)`, `(lb.)`, and `(kg.)`.
 
-Supply repeatable unit options to build a table from custom values. When any
-custom values are supplied, only the requested unit tables are shown.
+Supply one or more values as positional arguments to build a custom table.
+Values must be positive and are sorted and deduplicated.
 
 ```console
-$ dming convert distance --foot 5 --foot 30
-$ dming convert distance --inch 6 --mile 1
-$ dming convert weight --pound 2.5 --pound 10
+$ dming convert feet 5 30
+$ dming convert inches 6 12
+$ dming convert pounds 2.5 10
 ```
 
-### 2024 Rules References
+### SRD 5.2.1 Rules References
 
-Use `dming rules` for fixed Rich tables from the official 2024 D&D rules.
+Use `dming rules` for fifth-edition reference tables from SRD 5.2.1.
 
 ```console
 $ dming rules abilities
+$ dming rules advancement
 $ dming rules carrying
 $ dming rules difficulty
 $ dming rules proficiency
 $ dming rules sizes
 ```
 
-Each table is based on an official 2024 rule:
-
-- [Ability Modifiers](https://www.dndbeyond.com/sources/dnd/br-2024/playing-the-game#AbilityModifiers)
-- [Typical Difficulty Classes](https://www.dndbeyond.com/sources/dnd/br-2024/playing-the-game#DifficultyClass)
-- [Proficiency Bonus by Level or Challenge Rating](https://www.dndbeyond.com/sources/dnd/br-2024/how-to-use-a-monster#ProficiencyBonus)
-- [Creature Size and Space](https://www.dndbeyond.com/sources/dnd/br-2024/playing-the-game#CreatureSize)
-- [Carrying Capacity](https://www.dndbeyond.com/sources/dnd/br-2024/rules-glossary#CarryingCapacity)
+The source tables are available in the
+[System Reference Document 5.2.1](https://www.dndbeyond.com/srd). Character
+Advancement includes levels 1–20, cumulative XP thresholds, and proficiency
+bonuses.
 
 Creature sizes also include metric dimensions. Carrying-capacity entries also
 include kilogram equivalents for carrying and for dragging, lifting, or pushing.
@@ -150,3 +155,21 @@ For development instructions, see the [DMing development guide](DEVELOPMENT.md).
 ## Releases
 
 GitHub Releases are the canonical release history. See [DMing releases](https://github.com/sauljabin/dming/releases) for release notes and downloadable artifacts.
+
+## Licensing
+
+DMing's original code is available under the MIT License. SRD-derived reference
+data is available under CC BY 4.0; see [NOTICE.md](NOTICE.md) for attribution and
+details about modifications.
+
+> This work includes material from the System Reference Document 5.2.1 (“SRD
+> 5.2.1”) by Wizards of the Coast LLC, available at
+> https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative
+> Commons Attribution 4.0 International License, available at
+> https://creativecommons.org/licenses/by/4.0/legalcode.
+
+## AI Assistance
+
+This project uses AI-assisted development tools. Some code and documentation
+may be generated or revised with AI assistance. All AI-assisted changes are
+reviewed and tested by the maintainer before they are included.

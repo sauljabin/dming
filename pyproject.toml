@@ -6,14 +6,14 @@ authors = [
     { name = "Saúl Piña", email = "sauljabin@gmail.com" }
 ]
 classifiers = [
-    "License :: OSI Approved :: MIT License",
     "Environment :: Console",
     "Operating System :: MacOS",
     "Operating System :: Unix",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
 ]
-license = "MIT"
+license = "MIT AND CC-BY-4.0"
+license-files = ["LICENSE", "LICENSES/*", "NOTICE.md"]
 readme = "README.md"
 requires-python = ">=3.13,<3.15"
 dependencies = [
@@ -23,7 +23,7 @@ dependencies = [
 
 [project.scripts]
 dming = "dming.cli:dming"
-roll = "dming.cli:_roll"
+roll = "dming.commands.roll:roll_command"
 
 [project.urls]
 homepage = "https://github.com/sauljabin/dming"
@@ -36,7 +36,6 @@ funding = "https://github.com/sponsors/sauljabin"
 dev = [
     "actionlint-py",
     "black",
-    "faker",
     "mypy",
     "pre-commit",
     "ruff",
