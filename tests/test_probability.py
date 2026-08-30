@@ -3,7 +3,8 @@ from unittest.mock import patch
 
 from click.testing import CliRunner
 
-from dming.cli import _chance, dming
+from dming.cli import dming
+from dming.commands.chance import chance
 from dming.probability import (
     InvalidProbabilityError,
     parse_die,
@@ -77,7 +78,7 @@ class TestProbability(unittest.TestCase):
 class TestProbabilityCli(unittest.TestCase):
     def test_chance_renders_rich_probabilities(self):
         result = CliRunner().invoke(
-            _chance,
+            chance,
             ["d20", "--min-target", "10", "--max-target", "10"],
         )
 
@@ -93,7 +94,7 @@ class TestProbabilityCli(unittest.TestCase):
 
     def test_chance_shows_lowest_roll_needed(self):
         result = CliRunner().invoke(
-            _chance,
+            chance,
             ["d20+4", "--min-target", "10", "--max-target", "10"],
         )
 
@@ -102,7 +103,7 @@ class TestProbabilityCli(unittest.TestCase):
 
     def test_chance_labels_guaranteed_and_impossible_rolls(self):
         result = CliRunner().invoke(
-            _chance,
+            chance,
             ["d20+4", "--min-target", "1", "--max-target", "25"],
         )
 
@@ -112,7 +113,7 @@ class TestProbabilityCli(unittest.TestCase):
 
     def test_chance_uses_modified_expression_as_column(self):
         result = CliRunner().invoke(
-            _chance,
+            chance,
             ["d20+5", "--min-target", "25", "--max-target", "25"],
         )
 
@@ -124,7 +125,7 @@ class TestProbabilityCli(unittest.TestCase):
 
     def test_chance_rejects_inverted_range(self):
         result = CliRunner().invoke(
-            _chance,
+            chance,
             ["d20", "--min-target", "10", "--max-target", "5"],
         )
 
@@ -132,7 +133,7 @@ class TestProbabilityCli(unittest.TestCase):
         self.assertIn("minimum target cannot exceed maximum target", result.output)
 
     def test_chance_rejects_nonpositive_target_option(self):
-        result = CliRunner().invoke(_chance, ["d20", "--min-target", "0"])
+        result = CliRunner().invoke(chance, ["d20", "--min-target", "0"])
 
         self.assertEqual(2, result.exit_code)
         self.assertIn("0 is not in the range x>=1", result.output)

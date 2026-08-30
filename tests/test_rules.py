@@ -1,27 +1,32 @@
+import csv
+import io
+import json
 import unittest
 
 from click.testing import CliRunner
 
-from dming.cli import (
-    _abilities,
-    _carrying,
-    _difficulty,
-    _proficiency,
-    _rules,
-    _sizes,
-    dming,
+from dming.cli import dming
+from dming.commands.rules import (
+    abilities,
+    advancement,
+    carrying,
+    difficulty,
+    proficiency,
+    rules,
+    sizes,
 )
 from dming.rules import (
     ABILITY_MODIFIERS,
     CARRYING_CAPACITIES,
     CREATURE_SIZES,
     DIFFICULTY_CLASSES,
+    LEVEL_ADVANCEMENT,
     PROFICIENCY_BONUSES,
 )
 
 
 class TestRulesData(unittest.TestCase):
-    def test_official_ability_modifiers(self):
+    def test_srd_ability_modifiers(self):
         self.assertEqual(
             (
                 ("1", -5),
@@ -44,7 +49,7 @@ class TestRulesData(unittest.TestCase):
             ABILITY_MODIFIERS,
         )
 
-    def test_official_difficulty_classes(self):
+    def test_srd_difficulty_classes(self):
         self.assertEqual(
             (
                 ("Very Easy", 5),
@@ -57,7 +62,7 @@ class TestRulesData(unittest.TestCase):
             DIFFICULTY_CLASSES,
         )
 
-    def test_official_proficiency_bonuses(self):
+    def test_srd_proficiency_bonuses(self):
         self.assertEqual(
             (
                 ("Up to 4", 2),
@@ -72,7 +77,7 @@ class TestRulesData(unittest.TestCase):
             PROFICIENCY_BONUSES,
         )
 
-    def test_official_creature_sizes(self):
+    def test_srd_creature_sizes(self):
         self.assertEqual(
             (
                 ("Tiny", "2½ by 2½", "0.76 by 0.76", "4 per square"),
@@ -85,7 +90,7 @@ class TestRulesData(unittest.TestCase):
             CREATURE_SIZES,
         )
 
-    def test_official_carrying_capacities(self):
+    def test_srd_carrying_capacities(self):
         self.assertEqual(
             (
                 ("Tiny", 7.5, 15),
@@ -97,51 +102,59 @@ class TestRulesData(unittest.TestCase):
             CARRYING_CAPACITIES,
         )
 
+    def test_srd_character_advancement(self):
+        self.assertEqual(20, len(LEVEL_ADVANCEMENT))
+        self.assertEqual((1, 0, 2), LEVEL_ADVANCEMENT[0])
+        self.assertEqual((5, 6_500, 3), LEVEL_ADVANCEMENT[4])
+        self.assertEqual((11, 85_000, 4), LEVEL_ADVANCEMENT[10])
+        self.assertEqual((17, 225_000, 6), LEVEL_ADVANCEMENT[16])
+        self.assertEqual((20, 355_000, 6), LEVEL_ADVANCEMENT[-1])
+
 
 class TestRulesCli(unittest.TestCase):
     def test_rules_without_subcommand_shows_help(self):
-        result = CliRunner().invoke(_rules)
+        result = CliRunner().invoke(rules)
 
         self.assertEqual(0, result.exit_code)
         self.assertIn("Usage:", result.output)
         self.assertEqual(
-            {"abilities", "carrying", "difficulty", "proficiency", "sizes"},
-            set(_rules.commands),
+            {"abilities", "advancement", "carrying", "difficulty", "proficiency", "sizes"},
+            set(rules.commands),
         )
 
     def test_abilities_table(self):
-        result = CliRunner().invoke(_abilities)
+        result = CliRunner().invoke(abilities)
 
         self.assertEqual(0, result.exit_code)
-        self.assertIn("📖 Ability Modifiers · 2024", result.output)
+        self.assertIn("📖 Ability Modifiers · SRD 5.2.1", result.output)
         self.assertIn("2–3", result.output)
         self.assertIn("−5", result.output)
         self.assertIn("+10", result.output)
 
     def test_difficulty_table(self):
-        result = CliRunner().invoke(_difficulty)
+        result = CliRunner().invoke(difficulty)
 
         self.assertEqual(0, result.exit_code)
-        self.assertIn("📖 Typical Difficulty Classes · 2024", result.output)
+        self.assertIn("📖 Typical Difficulty Classes · SRD 5.2.1", result.output)
         self.assertIn("Very Easy", result.output)
         self.assertIn("Nearly Impossible", result.output)
         self.assertIn("30", result.output)
 
     def test_proficiency_table(self):
-        result = CliRunner().invoke(_proficiency)
+        result = CliRunner().invoke(proficiency)
 
         self.assertEqual(0, result.exit_code)
-        self.assertIn("📖 Proficiency Bonus · 2024", result.output)
+        self.assertIn("📖 Proficiency Bonus · SRD 5.2.1", result.output)
         self.assertIn("Level or CR", result.output)
         self.assertIn("Up to 4", result.output)
         self.assertIn("29–30", result.output)
         self.assertIn("+9", result.output)
 
     def test_sizes_table(self):
-        result = CliRunner().invoke(_sizes)
+        result = CliRunner().invoke(sizes)
 
         self.assertEqual(0, result.exit_code)
-        self.assertIn("📖 Creature Size and Space · 2024", result.output)
+        self.assertIn("📖 Creature Size and Space · SRD 5.2.1", result.output)
         self.assertIn("Space (ft.)", result.output)
         self.assertIn("Space (m.)", result.output)
         self.assertIn("2½ by 2½", result.output)
@@ -151,10 +164,10 @@ class TestRulesCli(unittest.TestCase):
         self.assertIn("16 squares (4 by 4)", result.output)
 
     def test_carrying_table(self):
-        result = CliRunner().invoke(_carrying)
+        result = CliRunner().invoke(carrying)
 
         self.assertEqual(0, result.exit_code)
-        self.assertIn("📖 Carrying Capacity · 2024", result.output)
+        self.assertIn("📖 Carrying Capacity · SRD 5.2.1", result.output)
         self.assertIn("Creature Size", result.output)
         self.assertIn("Drag/Lift/Push", result.output)
         self.assertIn("Small/Medium", result.output)
@@ -172,3 +185,31 @@ class TestRulesCli(unittest.TestCase):
         for command in ("chance", "convert", "roll", "rules"):
             with self.subTest(command=command):
                 self.assertIn(command, result.output)
+
+    def test_advancement_rich_table(self):
+        result = CliRunner().invoke(advancement)
+
+        self.assertEqual(0, result.exit_code)
+        self.assertIn("📖 Character Advancement · SRD 5.2.1", result.output)
+        self.assertIn("Experience Points", result.output)
+        self.assertIn("355000", result.output.replace(",", ""))
+        self.assertIn("+6", result.output)
+
+    def test_advancement_json_has_native_numbers(self):
+        result = CliRunner().invoke(advancement, ["--format", "json"])
+
+        self.assertEqual(0, result.exit_code)
+        rows = json.loads(result.output)
+        self.assertEqual(20, len(rows))
+        self.assertEqual(
+            {"level": 20, "experience_points": 355_000, "proficiency_bonus": 6},
+            rows[-1],
+        )
+
+    def test_rules_csv_uses_semantic_headers(self):
+        result = CliRunner().invoke(carrying, ["--format", "csv"])
+
+        self.assertEqual(0, result.exit_code)
+        row = next(csv.DictReader(io.StringIO(result.output)))
+        self.assertIn("carry_kilograms_multiplier", row)
+        self.assertEqual("3.401942775", row["carry_kilograms_multiplier"])

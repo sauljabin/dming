@@ -1,14 +1,14 @@
+import csv
+import io
+import json
 import random
 import unittest
 from unittest.mock import patch
 
 from click.testing import CliRunner
-from faker import Faker
 
-from dming.cli import _roll
-from dming.dice import roll, roll_details
-
-faker = Faker()
+from dming.commands.roll import roll_command
+from dming.dice import InvalidDiceError, roll, roll_details
 
 
 class TestNormalRoll(unittest.TestCase):
@@ -56,12 +56,12 @@ class TestNormalRoll(unittest.TestCase):
         self.assertEqual(("92", 92), result)
 
     @patch("dming.dice.random")
-    def test_roll_details_include_each_die_in_formula(self, mock_random):
+    def test_roll_details_include_each_die_in_calculation(self, mock_random):
         mock_random.randint.side_effect = [4, 4]
 
         details = roll_details("2d20")
 
-        self.assertEqual("4+4", details.formula)
+        self.assertEqual("4+4", details.calculation)
         self.assertEqual((4, 4), details.groups[0].rolls)
 
     @patch("dming.dice.random")
@@ -77,10 +77,34 @@ class TestNormalRoll(unittest.TestCase):
         generated_dice = [1, 2, 3, 4, 5, 6]
         mock_random.randint.side_effect = generated_dice
 
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(InvalidDiceError) as context:
             roll("xd1")
 
-        self.assertEqual("not allowed characters", f"{context.exception}")
+        self.assertEqual("invalid term: xd1", f"{context.exception}")
+
+    @patch("dming.dice.random")
+    def test_whitespace_is_accepted(self, mock_random):
+        mock_random.randint.return_value = 10
+
+        self.assertEqual(("10+4-2", 12), roll(" d20 + 4 - 2 "))
+
+    def test_invalid_expressions_raise_domain_error(self):
+        expected = {
+            "": "roll expression cannot be empty",
+            "+": "an operator must be followed by a term",
+            "d0": "die must have at least 1 side",
+            "0d20": "dice count must be at least 1",
+            "2d20kh0": "filter count must be at least 1",
+            "2d20kh3": "filter count cannot exceed dice count",
+            "1d20++2": "operators must appear between terms",
+            "d20/2": "invalid term: d20/2",
+        }
+        for expression, message in expected.items():
+            with (
+                self.subTest(expression=expression),
+                self.assertRaisesRegex(InvalidDiceError, message),
+            ):
+                roll(expression)
 
 
 class TestKeepHighestRoll(unittest.TestCase):
@@ -303,16 +327,16 @@ class TestDropLowestRoll(unittest.TestCase):
 
 class TestRollCli(unittest.TestCase):
     @patch("dming.dice.random")
-    def test_plain_details_show_rolls_selection_and_formula(self, mock_random):
+    def test_plain_details_show_rolls_selection_and_calculation(self, mock_random):
         mock_random.randint.side_effect = [19, 9]
 
-        result = CliRunner().invoke(_roll, ["--details", "--plain", "2d20kh1"])
+        result = CliRunner().invoke(roll_command, ["--details", "--plain", "2d20kh1"])
 
         self.assertEqual(0, result.exit_code)
-        self.assertIn("Roll:    2d20kh1", result.output)
-        self.assertIn("2d20kh1: 19, 9 -> 19 (keep highest 1)", result.output)
-        self.assertIn("Math:    19", result.output)
-        self.assertIn("Result:  19", result.output)
+        self.assertIn("Roll:        2d20kh1", result.output)
+        self.assertIn("2d20kh1:     19, 9 -> 19 (keep highest 1)", result.output)
+        self.assertIn("Calculation: 19", result.output)
+        self.assertIn("Result:      19", result.output)
         self.assertNotIn("Rolled:", result.output)
         self.assertNotIn("Rule:", result.output)
         self.assertNotIn("\x1b[", result.output)
@@ -321,22 +345,22 @@ class TestRollCli(unittest.TestCase):
     def test_details_show_every_unfiltered_die(self, mock_random):
         mock_random.randint.side_effect = [4, 4]
 
-        result = CliRunner().invoke(_roll, ["--details", "--plain", "2d20"])
+        result = CliRunner().invoke(roll_command, ["--details", "--plain", "2d20"])
 
         self.assertEqual(0, result.exit_code)
-        self.assertIn("Math:   4 + 4", result.output)
-        self.assertIn("Result: 8", result.output)
+        self.assertIn("Calculation: 4 + 4", result.output)
+        self.assertIn("Result:      8", result.output)
 
     @patch("dming.dice.random")
     def test_plain_details_have_no_styling_or_emojis(self, mock_random):
         mock_random.randint.side_effect = [19, 9]
 
-        result = CliRunner().invoke(_roll, ["--details", "--plain", "2d20kh1"])
+        result = CliRunner().invoke(roll_command, ["--details", "--plain", "2d20kh1"])
 
         self.assertEqual(0, result.exit_code)
-        self.assertIn("Roll:    2d20kh1", result.output)
-        self.assertIn("Math:    19", result.output)
-        self.assertIn("Result:  19", result.output)
+        self.assertIn("Roll:        2d20kh1", result.output)
+        self.assertIn("Calculation: 19", result.output)
+        self.assertIn("Result:      19", result.output)
         self.assertNotIn("🎲", result.output)
         self.assertNotIn("\x1b[", result.output)
 
@@ -345,7 +369,7 @@ class TestRollCli(unittest.TestCase):
         mock_random.randint.side_effect = [5, 7, 5, 7, 13, 10, 5, 9]
 
         result = CliRunner().invoke(
-            _roll,
+            roll_command,
             ["--details", "1d6+1d8+4d20kh2+2d20kl1+15"],
         )
 
@@ -358,19 +382,51 @@ class TestRollCli(unittest.TestCase):
     def test_plain_result_is_only_the_number(self, mock_random):
         mock_random.randint.return_value = 12
 
-        result = CliRunner().invoke(_roll, ["--plain", "d20"])
+        result = CliRunner().invoke(roll_command, ["--plain", "d20"])
 
         self.assertEqual(0, result.exit_code)
         self.assertEqual("12\n", result.output)
 
     def test_verbose_short_option_is_replaced(self):
-        result = CliRunner().invoke(_roll, ["-v", "d20"])
+        result = CliRunner().invoke(roll_command, ["-v", "d20"])
 
         self.assertNotEqual(0, result.exit_code)
         self.assertIn("No such option '-v'", result.output)
 
     def test_no_color_option_is_removed(self):
-        result = CliRunner().invoke(_roll, ["--no-color", "d20"])
+        result = CliRunner().invoke(roll_command, ["--no-color", "d20"])
 
         self.assertNotEqual(0, result.exit_code)
         self.assertIn("No such option '--no-color'", result.output)
+
+    @patch("dming.dice.random")
+    def test_json_result_is_one_object(self, mock_random):
+        mock_random.randint.return_value = 12
+
+        result = CliRunner().invoke(roll_command, ["d20", "--format", "json"])
+
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual({"expression": "d20", "result": 12}, json.loads(result.output))
+
+    @patch("dming.dice.random")
+    def test_detailed_csv_has_structured_groups(self, mock_random):
+        mock_random.randint.side_effect = [19, 9]
+
+        result = CliRunner().invoke(
+            roll_command,
+            ["2d20kh1", "--details", "--format", "csv"],
+        )
+
+        self.assertEqual(0, result.exit_code)
+        row = next(csv.DictReader(io.StringIO(result.output)))
+        self.assertEqual("19", row["result"])
+        self.assertEqual("19", row["calculation"])
+        groups = json.loads(row["groups"])
+        self.assertEqual([19, 9], groups[0]["rolls"])
+        self.assertEqual([0], groups[0]["selected_indices"])
+
+    def test_invalid_roll_is_friendly(self):
+        result = CliRunner().invoke(roll_command, ["d0", "--format", "json"])
+
+        self.assertEqual(1, result.exit_code)
+        self.assertIn("Invalid roll: die must have at least 1 side", result.output)

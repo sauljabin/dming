@@ -20,13 +20,26 @@ def verify_wheel(wheel: Path, version: str) -> None:
 
         if metadata["Version"] != version:
             raise ValueError(f"wheel version is {metadata['Version']}, expected {version}")
+        if metadata["License-Expression"] != "MIT AND CC-BY-4.0":
+            raise ValueError("wheel does not declare the combined license expression")
         if not any(name.endswith(".dist-info/entry_points.txt") for name in names):
             raise ValueError("wheel does not contain console entry points")
+        required_licenses = ("LICENSE", "NOTICE.md", "LICENSES/CC-BY-4.0.txt")
+        for required in required_licenses:
+            if not any(name.endswith(required) for name in names):
+                raise ValueError(f"wheel does not contain {required}")
 
 
 def verify_sdist(sdist: Path, version: str) -> None:
     expected_root = f"dming-{version}/"
-    required = {"LICENSE", "pyproject.toml", "dming/__init__.py"}
+    required = {
+        "LICENSE",
+        "LICENSES/CC-BY-4.0.txt",
+        "NOTICE.md",
+        "pyproject.toml",
+        "dming/__init__.py",
+        "dming/srd_data.py",
+    }
     with tarfile.open(sdist, "r:gz") as archive:
         names = set(archive.getnames())
 

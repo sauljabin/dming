@@ -21,13 +21,16 @@
   a backward-compatible alias for `dming roll`.
 - Chance tables use `dming chance`; do not restore the removed `dming table`
   command.
-- Conversion tables use `dming convert`, remain Rich-only and equal-width, and
-  put unit abbreviations in column headers. Distance includes 5-foot Squares;
-  weight converts pounds to kilograms without a grams column.
-- Official 2024 D&D reference tables use the `dming rules` command family and
-  must remain aligned with the linked official D&D Beyond sources. Creature
-  sizes include feet, meters, and Squares; carrying capacity includes pound and
-  kilogram Strength multipliers.
+- Conversion tables use `dming convert inches|feet|miles|pounds [VALUE ...]`,
+  remain equal-width in Rich output, and put unit abbreviations in column
+  headers. Distance includes 5-foot Squares; pounds convert to kilograms.
+- Fifth-edition reference tables use the `dming rules` command family and must
+  remain aligned with SRD 5.2.1. Creature sizes include feet, meters, and
+  Squares; carrying capacity includes pound and kilogram Strength multipliers;
+  advancement includes levels, cumulative XP, and proficiency bonuses.
+- Every leaf command supports Rich, plain, JSON, and CSV. Root format options
+  are inherited, leaf options take precedence, and `roll --plain` remains an
+  alias for plain output.
 
 ## Code Quality and Verification
 
@@ -48,6 +51,9 @@
   builds once, verifies the tag against the artifacts, and publishes those same
   artifacts to PyPI and GitHub after approval.
 - DMing does not publish Docker images.
+- Original code is MIT licensed. `dming/srd_data.py` is derived from SRD 5.2.1
+  under CC BY 4.0; keep the exact attribution, modification notice, license
+  files, package metadata, and SRD-first wording aligned.
 - Release notes are generated from squash commit titles. Use user-visible
   `feat`, `fix`, `perf`, `docs`, `fix(security)`, or dependency-scoped
   `build(deps)`/`chore(deps)` types when applicable.

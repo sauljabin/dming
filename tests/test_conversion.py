@@ -1,8 +1,12 @@
+import csv
+import io
+import json
 import unittest
 
 from click.testing import CliRunner
 
-from dming.cli import _convert, _distance, _weight
+from dming.cli import dming
+from dming.commands.convert import convert, feet, inches, miles, pounds
 from dming.conversion import (
     DEFAULT_FEET,
     DEFAULT_INCHES,
@@ -47,66 +51,82 @@ class TestConversions(unittest.TestCase):
 
 
 class TestConversionCli(unittest.TestCase):
-    def test_convert_group_exposes_distance_and_weight(self):
-        result = CliRunner().invoke(_convert, ["--help"])
+    def test_convert_group_exposes_unit_commands(self):
+        result = CliRunner().invoke(convert, ["--help"])
 
         self.assertEqual(0, result.exit_code)
-        self.assertIn("distance", result.output)
-        self.assertIn("weight", result.output)
+        for command in ("inches", "feet", "miles", "pounds"):
+            with self.subTest(command=command):
+                self.assertIn(command, result.output)
+        self.assertNotIn("distance", convert.commands)
+        self.assertNotIn("weight", convert.commands)
 
-    def test_distance_defaults_render_three_tables(self):
-        result = CliRunner().invoke(_distance)
-
-        self.assertEqual(0, result.exit_code)
-        self.assertIn("📏 Inches to Meters", result.output)
-        self.assertIn("📏 Feet to Meters", result.output)
-        self.assertIn("📏 Miles to Kilometers", result.output)
-        for abbreviation in ("(in.)", "(ft.)", "(mi.)", "(m.)", "(km.)"):
-            with self.subTest(abbreviation=abbreviation):
-                self.assertIn(abbreviation, result.output)
-        self.assertIn("Squares", result.output)
+    def test_unit_defaults_render_one_table_each(self):
+        expected = (
+            (inches, "📏 Inches to Meters", "(in.)"),
+            (feet, "📏 Feet to Meters", "(ft.)"),
+            (miles, "📏 Miles to Kilometers", "(mi.)"),
+            (pounds, "⚖️ Pounds to Kilograms", "(lb.)"),
+        )
+        for command, title, unit in expected:
+            with self.subTest(command=command.name):
+                result = CliRunner().invoke(command)
+                self.assertEqual(0, result.exit_code)
+                self.assertIn(title, result.output)
+                self.assertIn(unit, result.output)
 
     def test_all_conversion_tables_have_the_same_width(self):
-        distance = CliRunner().invoke(_distance)
-        weight = CliRunner().invoke(_weight)
+        borders = []
+        for command in (inches, feet, miles, pounds):
+            result = CliRunner().invoke(command)
+            borders.append(
+                next(line for line in result.output.splitlines() if line.startswith("┏"))
+            )
 
-        distance_borders = [line for line in distance.output.splitlines() if line.startswith("┏")]
-        weight_border = next(line for line in weight.output.splitlines() if line.startswith("┏"))
+        self.assertEqual(1, len({len(border) for border in borders}))
 
-        self.assertEqual(3, len(distance_borders))
-        self.assertEqual({len(weight_border)}, {len(line) for line in distance_borders})
-
-    def test_custom_distance_renders_only_requested_units(self):
-        result = CliRunner().invoke(_distance, ["--foot", "30", "--foot", "5"])
+    def test_custom_values_are_positional_sorted_and_deduplicated(self):
+        result = CliRunner().invoke(feet, ["30", "5", "5"])
 
         self.assertEqual(0, result.exit_code)
-        self.assertIn("📏 Feet to Meters", result.output)
         self.assertIn("1.52", result.output)
-        self.assertIn("1.00", result.output)
-        self.assertNotIn("Inches to Meters", result.output)
-        self.assertNotIn("Miles to Kilometers", result.output)
+        self.assertIn("9.14", result.output)
+        self.assertEqual(1, result.output.count("1.52"))
 
-    def test_weight_defaults_render_kilograms(self):
-        result = CliRunner().invoke(_weight)
-
-        self.assertEqual(0, result.exit_code)
-        self.assertIn("⚖️ Pounds to Kilograms", result.output)
-        self.assertIn("Pounds (lb.)", result.output)
-        self.assertIn("Kilograms (kg.)", result.output)
-        self.assertNotIn("Grams", result.output)
-        self.assertIn("0.45", result.output)
-
-    def test_custom_weight_values_are_rendered(self):
-        result = CliRunner().invoke(_weight, ["--pound", "2.5"])
+    def test_pounds_render_kilograms_without_grams(self):
+        result = CliRunner().invoke(pounds, ["2.5"])
 
         self.assertEqual(0, result.exit_code)
-        self.assertIn("2.5", result.output)
         self.assertIn("1.13", result.output)
+        self.assertNotIn("Grams", result.output)
 
-    def test_rejects_nonpositive_custom_values(self):
-        for command, option in ((_distance, "--foot"), (_weight, "--pound")):
-            with self.subTest(option=option):
-                result = CliRunner().invoke(command, [option, "0"])
-
+    def test_rejects_nonpositive_values(self):
+        for command in (inches, feet, miles, pounds):
+            with self.subTest(command=command.name):
+                result = CliRunner().invoke(command, ["0"])
                 self.assertEqual(2, result.exit_code)
                 self.assertIn("0 is not in the range x>0", result.output)
+
+    def test_json_preserves_unrounded_numbers(self):
+        result = CliRunner().invoke(feet, ["5", "--format", "json"])
+
+        self.assertEqual(0, result.exit_code)
+        self.assertEqual(
+            [{"feet": 5.0, "meters": 1.524, "squares": 1.0}],
+            json.loads(result.output),
+        )
+
+    def test_csv_has_semantic_headers(self):
+        result = CliRunner().invoke(miles, ["1", "--format", "csv"])
+
+        self.assertEqual(0, result.exit_code)
+        rows = list(csv.DictReader(io.StringIO(result.output)))
+        self.assertEqual(["miles", "kilometers", "squares"], list(rows[0]))
+        self.assertEqual("1.609344", rows[0]["kilometers"])
+
+    def test_removed_commands_are_unknown(self):
+        for command in ("distance", "weight"):
+            with self.subTest(command=command):
+                result = CliRunner().invoke(dming, ["convert", command])
+                self.assertEqual(2, result.exit_code)
+                self.assertIn(f"No such command '{command}'", result.output)
